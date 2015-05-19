@@ -1,0 +1,210 @@
+setwd("/Users/tuo/Desktop/cpsc340/assignment1")
+getwd()
+
+#install.packages("proxy") #(text mining package in R)
+#install.packages("topicmodels")
+#install.packages("entropy")
+library(tm)
+library(topicmodels)
+library(proxy)
+library(entropy)
+
+#load data
+corpus1 <- VCorpus(DirSource("Assign1newsgroup/comp.hardware/", encoding = "UTF-8"))
+corpus2 <- VCorpus(DirSource("Assign1newsgroup/comp.os/", encoding = "UTF-8"))
+corpus3 <- VCorpus(DirSource("Assign1newsgroup/sci.med/", encoding = "UTF-8"))
+corpusx <- c(corpus1,corpus2,corpus3)
+
+# convert to lower case
+# getTransformations()
+corpusx <- tm_map(corpusx, content_transformer(tolower))
+# strip whitespace
+corpusx <- tm_map(corpusx, stripWhitespace)
+# remove punctuation
+corpusx <- tm_map(corpusx, content_transformer(removePunctuation))
+# remove numbers
+corpusx <- tm_map(corpusx, removeNumbers)
+# remove URLs
+removeURL <- function(x) gsub("http[[:alnum:]]*", "", x)
+corpusx <- tm_map(corpusx, content_transformer(removeURL))
+
+
+# remove stopwords (stop words are the list of words that are freqeunt and have less value in terms on content such as: a, the, is, ...)
+myStopwords <- c(stopwords('english'))
+# View stopwords
+myStopwords
+corpusx <- tm_map(corpusx, removeWords, myStopwords)
+
+# create term frequency vector for each document with word length of atleast one character
+myTdm <- TermDocumentMatrix(corpusx, control=list(wordLengths=c(1,Inf)))
+myTdm
+
+# inspect frequent words with low frequency
+findFreqTerms(myTdm, lowfreq=10)
+findFreqTerms(myTdm, lowfreq=1)
+
+
+# which words are associated with "mining" with correlation no less than 0.25?
+findAssocs(myTdm, "wife", 0.25)
+
+# remove sparse terms
+myTdm2 <- removeSparseTerms(myTdm, sparse=0.97)
+myTdm2
+
+# hirerachical clustering
+#conversion to matrix:
+m2 <- as.matrix(myTdm2)
+#transpose the term-document matrix to a document-term one. 
+m3 <- t(m2)
+# set a fixed random seed to be able to reproduce the results
+set.seed(1000)
+
+distmatrix <- dist(scale(m3))
+hclustResults <- hclust(distmatrix,method="ward.D")
+
+
+
+
+
+
+#print the plot for 2 clusters
+plot(hclustResults,cex=0.5,hang=-1,main="tf k=2")
+rect.hclust(hclustResults,k=2)
+ct <- cutree(hclustResults, k=2)
+d = discretize(ct, numBins=2)
+c <- entropy(d)
+c
+#close the plot 
+#print the plot again for 3 clusters
+plot(hclustResults,cex=0.5,hang=-1,main="tf k=3")
+rect.hclust(hclustResults,k=3)
+ct <- cutree(hclustResults, k=3)
+d = discretize(ct, numBins=3)
+c <- entropy(d)
+c
+#close the plot 
+#print the plot again for 4 clusters
+plot(hclustResults,cex=0.5,hang=-1,main="tf k=4")
+rect.hclust(hclustResults,k=4)
+ct <- cutree(hclustResults, k=4)
+d = discretize(ct, numBins=4)
+c <- entropy(d)
+c
+#close the plot 
+#print the plot again for 5 clusters
+plot(hclustResults,cex=0.5,hang=-1,main="tf k=5")
+rect.hclust(hclustResults,k=5)
+ct <- cutree(hclustResults, k=5)
+d = discretize(ct, numBins=5)
+c <- entropy(d)
+c
+#close the plot 
+#print the plot again for 6 clusters
+plot(hclustResults,cex=0.5,hang=-1,main="tf k=6")
+rect.hclust(hclustResults,k=6)
+ct <- cutree(hclustResults, k=6)
+d = discretize(ct, numBins=6)
+c <- entropy(d)
+c
+#tf idf
+tfidf <-DocumentTermMatrix(corpusx,control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE)))
+
+#conversion to matrix:
+m2idf <- as.matrix(tfidf)
+m2idf
+# set a fixed random seed to be able to reproduce the results
+set.seed(1000)
+
+distmatrixidf <- dist(scale(m2idf))
+distmatrixidf
+hclustResultsidf <- hclust(distmatrixidf,method="ward.D")
+hclustResultsidf
+
+#print the plot for 2 clusters
+plot(hclustResultsidf,cex=0.5,hang=-1,main="tfidf k=2")
+rect.hclust(hclustResultsidf,k=2)
+ct <- cutree(hclustResultsidf, k=2)
+d = discretize(ct, numBins=2)
+c <- entropy(d)
+c
+#close the plot 
+#print the plot again for 3 clusters
+plot(hclustResultsidf,cex=0.5,hang=-1,main="tfidf k=3")
+rect.hclust(hclustResultsidf,k=3)
+ct <- cutree(hclustResultsidf, k=3)
+d = discretize(ct, numBins=3)
+c <- entropy(d)
+c
+#close the plot 
+#print the plot again for 4 clusters
+plot(hclustResultsidf,cex=0.5,hang=-1,main="tfidf k=4")
+rect.hclust(hclustResultsidf,k=4)
+ct <- cutree(hclustResultsidf, k=4)
+d = discretize(ct, numBins=4)
+c <- entropy(d)
+c
+#close the plot 
+#print the plot again for 5 clusters
+plot(hclustResultsidf,cex=0.5,hang=-1,main="tfidf k=5")
+rect.hclust(hclustResultsidf,k=5)
+ct <- cutree(hclustResultsidf, k=5)
+d = discretize(cut, numBins=5)
+c <- entropy(d)
+c
+#close the plot 
+#print the plot again for 6 clusters
+plot(hclustResultsidf,cex=0.5,hang=-1,main="tfidf k=6")
+rect.hclust(hclustResultsidf,k=6)
+ct <- cutree(hclustResultsidf, k=6)
+d = discretize(ct, numBins=6)
+c <- entropy(d)
+c
+
+#===========================================================================
+# cosine
+cosine <- dist(scale(m3), method="cosine")
+cosine
+hc <- hclust(cosine, method = "ward.D")
+hc
+
+#print the plot for 2 clusters
+plot(hc,cex=0.5,hang=-1,main="cosine k=2")
+rect.hclust(hc,k=2)
+ct <- cutree(hc, k=2)
+d = discretize(ct, numBins=2)
+c <- entropy(d)
+c
+
+#print the plot for 3 clusters
+plot(hc,cex=0.5,hang=-1,main="cosine k=3")
+rect.hclust(hc,k=3)
+ct <- cutree(hc, k=3)
+d = discretize(ct, numBins=3)
+c <- entropy(d)
+c
+
+#print the plot for 4 clusters
+plot(hc,cex=0.5,hang=-1,main="cosine k=4")
+rect.hclust(hc,k=4)
+ct <- cutree(hc, k=4)
+d = discretize(ct, numBins=4)
+c <- entropy(d)
+c
+
+
+#print the plot for 5 clusters
+plot(hc,cex=0.5,hang=-1,main="cosine k=5")
+rect.hclust(hc,k=5)
+ct <- cutree(hc, k=5)
+d = discretize(ct, numBins=5)
+c <- entropy(d)
+c
+
+#print the plot for 6 clusters
+plot(hc,cex=0.5,hang=-1,main="cosine k=6")
+rect.hclust(hc,k=6)
+ct <- cutree(hc, k=6)
+d = discretize(ct, numBins=6)
+c <- entropy(d)
+c
+
